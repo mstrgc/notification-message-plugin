@@ -1,0 +1,21 @@
+.plugin-notificaion-div {
+    padding: 1px;
+    text-align: center;
+    color: white;
+}
+.success {
+    background: green;
+}
+
+.error {
+    background: red;
+}
+
+.warning {
+    background: yellow;
+    color: black;
+}
+
+.information {
+    background: blue;
+}

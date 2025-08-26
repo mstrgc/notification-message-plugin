@@ -11,7 +11,7 @@ class Settings_Page {
     }
 
     public function add_admin_menu() {
-        add_menu_page(
+        add_options_page(
             'Notification Message Settings',
             'Notification Settings',
             'manage_options',
@@ -23,24 +23,18 @@ class Settings_Page {
     public function register_settings() {
         register_setting('notification_message_settings', 'message_content');
         register_setting('notification_message_settings', 'message_type');
+        register_setting('notification_message_settings', 'message_status');
 
         add_settings_section(
             'notification_settings_section',
-            'Notification Content & Type Settings',
-            null,
-            'notification-settings'
-        );
-
-        add_settings_section(
-            'notification_settings_section2',
-            'Notification Content & Type Settings',
-            null,
+            'Notification Message Settings',
+            '__return_false',
             'notification-settings'
         );
 
         add_settings_field(
             'message_content',
-            'Write your message',
+            'Enter your message',
             [$this, 'message_content_callback'],
             'notification-settings',
             'notification_settings_section'
@@ -51,26 +45,42 @@ class Settings_Page {
             'Chosse the type of your message',
             [$this, 'message_type_callback'],
             'notification-settings',
-            'notification_settings_section2'
+            'notification_settings_section'
+        );
+
+        add_settings_field(
+            'message_status',
+            'Display notification message',
+            [$this, 'message_status_callback'],
+            'notification-settings',
+            'notification_settings_section'
         );
     }
 
     public function message_content_callback() {
         $message_content = get_option('message_content') ?? null;
         ?>
-            <input type="text" name="message_content" id="message_content" value="<?= $message_content ?>" placeholder="Enter your message">
+            <textarea name="message_content" id="message_content" placeholder="Enter your message"><?= $message_content ?></textarea>
         <?php
     }
 
     public function message_type_callback() {
-        $choosen_message_type = get_option('message_type');
-        $checked_radio = fn($message_type) => ($message_type == $choosen_message_type) ? 'checked' : '';
+        $current_message_type = get_option('message_type');
+        $is_checked = fn ($message_type) => ($message_type == $current_message_type) ? 'checked' : '';
         $message_types = ['success', 'error', 'warning', 'information'];
         foreach($message_types as $message_type) {
             ?>
-                <label><input type="radio" name="message_type" id="message_type" value="<?= $message_type ?>" <?= $checked_radio($message_type) ?>><?= ucfirst($message_type) ?></label>
+                <label><input type="radio" name="message_type" id="message_type" value="<?= $message_type ?>" <?= $is_checked($message_type) ?>><?= ucfirst($message_type) ?></label></br>
             <?php
         }
+    }
+
+    public function message_status_callback() {
+        $current_message_status = get_option('message_status') ?? null;
+        $is_checked = $current_message_status ? 'checked' : '';
+        ?>
+            <label><input type="checkbox" name="message_status" id="message_status" <?= $is_checked ?>>Display notification</label>
+        <?php
     }
 
     public function add_menu_page_callback() {
