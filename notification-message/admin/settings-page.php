@@ -1,5 +1,6 @@
 <?php
 
+//prevent direct access to this file
 if(!defined('ABSPATH')) {
     exit;
 }
@@ -21,9 +22,9 @@ class Settings_Page {
     }
 
     public function register_settings() {
-        register_setting('notification_message_settings', 'message_content');
-        register_setting('notification_message_settings', 'message_type');
-        register_setting('notification_message_settings', 'message_status');
+        register_setting('notification_message_settings', 'message_content', ['sanitize_callback' => [$this, 'sanitize_option_callback']]);
+        register_setting('notification_message_settings', 'message_type', ['sanitize_callback' => [$this, 'sanitize_option_callback']]);
+        register_setting('notification_message_settings', 'message_status', ['sanitize_callback' => [$this, 'sanitize_option_callback']]);
 
         add_settings_section(
             'notification_settings_section',
@@ -57,15 +58,24 @@ class Settings_Page {
         );
     }
 
+    public function sanitize_option_callback($option) {
+        //sanitizing fields
+        $result = esc_html($option);
+        return $result;
+    }
+
     public function message_content_callback() {
-        $message_content = get_option('message_content') ?? null;
+        //get current message content or recieve null
+        $current_message_content = get_option('message_content') ?? null;
         ?>
-            <textarea name="message_content" id="message_content" placeholder="Enter your message"><?= $message_content ?></textarea>
+            <textarea name="message_content" id="message_content" placeholder="Enter your message"><?= $current_message_content ?></textarea>
         <?php
     }
 
     public function message_type_callback() {
-        $current_message_type = get_option('message_type');
+        //get current message type or recieve null
+        $current_message_type = get_option('message_type') ?? null;
+        //check current message type in radio-checkbox
         $is_checked = fn ($message_type) => ($message_type == $current_message_type) ? 'checked' : '';
         $message_types = ['success', 'error', 'warning', 'information'];
         foreach($message_types as $message_type) {
@@ -76,7 +86,9 @@ class Settings_Page {
     }
 
     public function message_status_callback() {
+        //get current message status or recieve null
         $current_message_status = get_option('message_status') ?? null;
+        //check input if status is set true
         $is_checked = $current_message_status ? 'checked' : '';
         ?>
             <label><input type="checkbox" name="message_status" id="message_status" <?= $is_checked ?>>Display notification</label>
@@ -88,6 +100,7 @@ class Settings_Page {
             <form action="options.php" method="post">
                 <?= settings_fields('notification_message_settings') ?>
                 <?php do_settings_sections('notification-settings'); ?>
+                <?php apply_filters('sanitize_text_field', 'notification_message_settings') ?>
                 <?php submit_button('Create notification message'); ?>
             </form>
         <?php
