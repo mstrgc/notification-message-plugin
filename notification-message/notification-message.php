@@ -24,6 +24,7 @@ class Notification_Message {
         new Settings_Page();
         add_action('wp_head', [$this, 'display_notification_message']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue_assets']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_assets']);
     }
 
     public static function get_instance() {

@@ -7,6 +7,7 @@ if(!defined('ABSPATH')) {
 
 class Settings_Page {
     public function __construct() {
+        add_action('admin_init', [$this, 'handle_notification_message_form']);
         add_action('admin_menu', [$this, 'add_admin_menu']);
         add_action('admin_init', [$this, 'register_settings']);
     }
@@ -22,9 +23,9 @@ class Settings_Page {
     }
 
     public function register_settings() {
-        register_setting('notification_message_settings', 'message_content', ['sanitize_callback' => [$this, 'sanitize_option_callback']]);
-        register_setting('notification_message_settings', 'message_type', ['sanitize_callback' => [$this, 'sanitize_option_callback']]);
-        register_setting('notification_message_settings', 'message_status', ['sanitize_callback' => [$this, 'sanitize_option_callback']]);
+        register_setting('notification_message_settings', 'message_content');
+        register_setting('notification_message_settings', 'message_type');
+        register_setting('notification_message_settings', 'message_status');
 
         add_settings_section(
             'notification_settings_section',
@@ -58,10 +59,30 @@ class Settings_Page {
         );
     }
 
-    public function sanitize_option_callback($option) {
-        //sanitizing fields
-        $result = esc_html($option);
-        return $result;
+    public function handle_notification_message_form() {
+        //check if the form is submitted and nonce is set
+        if(isset($_POST['notification_message_nonce'])) {
+            //verify nonce
+            if(wp_verify_nonce($_POST['notification_message_nonce'], 'notification_message_nonce_check')) {
+                //retrive message args from post request and sanitize them
+                $message_content = sanitize_textarea_field($_POST['message_content']);
+                $message_type = esc_attr($_POST['message_type']);
+                $message_status = esc_attr($_POST['message_status']);
+
+                //update message args in database
+                update_option('message_content', $message_content);
+                update_option('message_type', $message_type);
+                update_option('message_status', $message_status);
+                //redirect to the settings page
+                $_POST['success'] = 'Changes saved';
+                //$success_message = ['success' => 'Changes Saved successfully'];
+                $redirect_url = $_SERVER['HTTP_REFERER'];
+                wp_redirect($redirect_url);
+                exit;
+            }
+        } else {
+            return;
+        }
     }
 
     public function message_content_callback() {
@@ -80,7 +101,8 @@ class Settings_Page {
         $message_types = ['success', 'error', 'warning', 'information'];
         foreach($message_types as $message_type) {
             ?>
-                <label><input type="radio" name="message_type" id="message_type" value="<?= $message_type ?>" <?= $is_checked($message_type) ?>><?= ucfirst($message_type) ?></label></br>
+                <input type="radio" name="message_type" id="message_type-<?= $message_type ?>" value="<?= $message_type ?>" <?= $is_checked($message_type) ?>>
+                <label for="message_type-<?= $message_type ?>" class="<?= $message_type ?> label-settings-admin"><?= ucfirst($message_type) ?></label>
             <?php
         }
     }
@@ -97,10 +119,14 @@ class Settings_Page {
 
     public function add_menu_page_callback() {
         ?>
-            <form action="options.php" method="post">
+            <?php if(isset($_POST['success'])) : ?>
+                <div class="notice notice-success"><?= $_POST['success'] ?></div>
+                <?php remove_query_arg('success'); ?>
+            <?php endif; ?>
+            <form method="POST" action="">
+                <?php wp_nonce_field('notification_message_nonce_check', 'notification_message_nonce') ?>
                 <?= settings_fields('notification_message_settings') ?>
                 <?php do_settings_sections('notification-settings'); ?>
-                <?php apply_filters('sanitize_text_field', 'notification_message_settings') ?>
                 <?php submit_button('Create notification message'); ?>
             </form>
         <?php
