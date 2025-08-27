@@ -69,14 +69,29 @@ class Settings_Page {
                 $message_type = esc_attr($_POST['message_type']);
                 $message_status = esc_attr($_POST['message_status']);
 
+                $errors = [];
+
+                if(strlen($message_content) == 0) {
+                    $errors[] = 'Message content cannot be empty';
+                }
+
+                if($message_type == '') {
+                    $errors[] = 'You must choose the message type';
+                }
+
+                if(!empty($errors)) {
+                    $redirect_url = add_query_arg(['errors' => $errors], $_SERVER['HTTP_REFERER']);
+                    wp_redirect($redirect_url);
+                    exit;
+                }
+
                 //update message args in database
                 update_option('message_content', $message_content);
                 update_option('message_type', $message_type);
                 update_option('message_status', $message_status);
                 //redirect to the settings page
-                $_POST['success'] = 'Changes saved';
-                //$success_message = ['success' => 'Changes Saved successfully'];
-                $redirect_url = $_SERVER['HTTP_REFERER'];
+                $success_message = ['success' => 'Changes Saved successfully'];
+                $redirect_url = add_query_arg($success_message, $_SERVER['HTTP_REFERER']);
                 wp_redirect($redirect_url);
                 exit;
             }
@@ -88,6 +103,7 @@ class Settings_Page {
     public function message_content_callback() {
         //get current message content or recieve null
         $current_message_content = get_option('message_content') ?? null;
+        $current_message_type = get_option('message_type');
         ?>
             <textarea name="message_content" id="message_content" placeholder="Enter your message"><?= $current_message_content ?></textarea>
         <?php
@@ -119,9 +135,14 @@ class Settings_Page {
 
     public function add_menu_page_callback() {
         ?>
-            <?php if(isset($_POST['success'])) : ?>
-                <div class="notice notice-success"><?= $_POST['success'] ?></div>
+            <?php if(isset($_GET['success'])) : //check for success message ?>
+                <div class="notice notice-success"><?= $_GET['success'] ?></div>
                 <?php remove_query_arg('success'); ?>
+            <?php elseif(isset($_GET['errors'])) : //check for error messages ?>
+                <?php foreach($_GET['errors'] as $error) : ?>
+                    <div class="notice notice-error"><?= $error ?></div>
+                <?php endforeach; ?>
+                <?php remove_query_arg('errors'); ?>
             <?php endif; ?>
             <form method="POST" action="">
                 <?php wp_nonce_field('notification_message_nonce_check', 'notification_message_nonce') ?>
