@@ -76,7 +76,7 @@ class Settings_Page {
                 }
 
                 if($message_type == '') {
-                    $errors[] = 'You must choose the message type';
+                    $errors[] = 'You must choose a message type';
                 }
 
                 if(!empty($errors)) {
@@ -103,31 +103,26 @@ class Settings_Page {
     public function message_content_callback() {
         //get current message content or recieve null
         $current_message_content = get_option('message_content') ?? null;
-        $current_message_type = get_option('message_type');
         ?>
             <textarea name="message_content" id="message_content" placeholder="Enter your message"><?= $current_message_content ?></textarea>
         <?php
     }
 
     public function message_type_callback() {
-        //get current message type or recieve null
-        $current_message_type = get_option('message_type') ?? null;
-        //check current message type in radio-checkbox
-        $is_checked = fn ($message_type) => ($message_type == $current_message_type) ? 'checked' : '';
+        //check current message type in radio-checkbox and return 'checked' in radiobox
+        $is_checked = fn ($message_type) => ($message_type == get_option('message_type')) ? 'checked' : '';
         $message_types = ['success', 'error', 'warning', 'information'];
         foreach($message_types as $message_type) {
             ?>
-                <input type="radio" name="message_type" id="message_type-<?= $message_type ?>" value="<?= $message_type ?>" <?= $is_checked($message_type) ?>>
-                <label for="message_type-<?= $message_type ?>" class="<?= $message_type ?> label-settings-admin"><?= ucfirst($message_type) ?></label>
+                <input type="radio" name="message_type" id="message_type-<?= $message_type ?>" value="<?= $message_type ?>" class="plugin-radio" <?= $is_checked($message_type) ?>>
+                <label for="message_type-<?= $message_type ?>" class="plugin-<?= $message_type ?> plugin-label-settings-admin"><?= ucfirst($message_type) ?></label>
             <?php
         }
     }
 
     public function message_status_callback() {
-        //get current message status or recieve null
-        $current_message_status = get_option('message_status') ?? null;
-        //check input if status is set true
-        $is_checked = $current_message_status ? 'checked' : '';
+        //check if status is true and return 'checked' in checkbox
+        $is_checked = get_option('message_status') ? 'checked' : '';
         ?>
             <label><input type="checkbox" name="message_status" id="message_status" <?= $is_checked ?>>Display notification</label>
         <?php
@@ -136,11 +131,11 @@ class Settings_Page {
     public function add_menu_page_callback() {
         ?>
             <?php if(isset($_GET['success'])) : //check for success message ?>
-                <div class="notice notice-success"><?= $_GET['success'] ?></div>
+                <div class="notice notice-success"><?= esc_attr($_GET['success']) ?></div>
                 <?php remove_query_arg('success'); ?>
             <?php elseif(isset($_GET['errors'])) : //check for error messages ?>
                 <?php foreach($_GET['errors'] as $error) : ?>
-                    <div class="notice notice-error"><?= $error ?></div>
+                    <div class="notice notice-error"><?= esc_attr($error) ?></div>
                 <?php endforeach; ?>
                 <?php remove_query_arg('errors'); ?>
             <?php endif; ?>

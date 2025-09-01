@@ -53,7 +53,7 @@ class Notification_Message {
             //check if thenotification message is not empty
             if(!empty($message_content) && !empty($message_type)) {
                 ?>
-                    <div class="<?= $message_type ?> plugin-notificaion-div">
+                    <div class="plugin-<?= $message_type ?> plugin-notificaion-div">
                         <p><?= $message_content ?></p>
                     </div>
                 <?php
